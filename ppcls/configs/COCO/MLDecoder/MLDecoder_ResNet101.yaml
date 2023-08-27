@@ -71,7 +71,7 @@ Optimizer:
   weight_decay: 0.0004
   lr:
     name: OneCycleLR
-    max_learning_rate: 0.001
+    max_learning_rate: 0.000625
     phase_pct: 0.2
 
 
