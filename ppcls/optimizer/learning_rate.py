@@ -44,7 +44,7 @@ class LRBase(object):
                  warmup_start_lr: float,
                  last_epoch: int,
                  by_epoch: bool,
-                 verbose: bool=False) -> None:
+                 verbose: bool = False) -> None:
         """Initialize and record the necessary parameters
         """
         super(LRBase, self).__init__()
@@ -195,7 +195,7 @@ class Linear(LRBase):
             power=self.power,
             cycle=self.cycle,
             last_epoch=self.last_epoch) if self.decay_steps > 0 else Constant(
-                self.learning_rate)
+            self.learning_rate)
 
         if self.warmup_steps > 0:
             learning_rate = self.linear_warmup(learning_rate)
@@ -244,7 +244,7 @@ class Cosine(LRBase):
             T_max=self.T_max,
             eta_min=self.eta_min,
             last_epoch=self.last_epoch) if self.T_max > 0 else Constant(
-                self.learning_rate)
+            self.learning_rate)
 
         if self.warmup_steps > 0:
             learning_rate = self.linear_warmup(learning_rate)
@@ -408,7 +408,7 @@ class Piecewise(LRBase):
         if learning_rate:
             decay_epochs = list(range(0, epochs, 30))
             values = [
-                learning_rate * (0.1**i) for i in range(len(decay_epochs))
+                learning_rate * (0.1 ** i) for i in range(len(decay_epochs))
             ]
             # when total epochs < 30, decay_epochs and values should be
             # [] and [lr] respectively, but paddle dont support.
@@ -610,7 +610,7 @@ class CosineFixmatch(LRBase):
                 return float(current_step) / float(
                     max(1, self.num_warmup_steps))
             no_progress = float(current_step - self.num_warmup_steps) / \
-                        float(max(1, self.epochs * self.step_each_epoch - self.num_warmup_steps))
+                          float(max(1, self.epochs * self.step_each_epoch - self.num_warmup_steps))
             return max(0., math.cos(math.pi * self.num_cycles * no_progress))
 
         learning_rate = lr.LambdaDecay(
@@ -619,3 +619,49 @@ class CosineFixmatch(LRBase):
             last_epoch=self.last_epoch)
         setattr(learning_rate, "by_epoch", self.by_epoch)
         return learning_rate
+
+
+class OneCycleLR(LRBase):
+    def __init__(self,
+                 max_learning_rate,
+                 total_steps,
+                 epochs: int,
+                 step_each_epoch: int,
+                 learning_rate: float,
+                 warmup_epoch: int,
+                 warmup_start_lr: float,
+                 by_epoch: bool,
+                 divide_factor=25.0,
+                 end_learning_rate=0.0001,
+                 phase_pct=0.3,
+                 anneal_strategy='cos',
+                 three_phase=False,
+                 last_epoch=-1,
+                 verbose=False):
+        super().__init__(
+            epochs, step_each_epoch, learning_rate, warmup_epoch,
+            warmup_start_lr, last_epoch, by_epoch, verbose)
+        self.max_learning_rate = max_learning_rate
+        self.total_steps = total_steps
+        self.divide_factor = divide_factor
+        self.end_learning_rate = end_learning_rate
+        self.phase_pct = phase_pct
+        self.anneal_strategy = anneal_strategy
+        self.three_phase = three_phase
+        self.last_epoch = last_epoch
+
+    def __call__(self):
+        learning_rate = lr.OneCycleLR(max_learning_rate=self.max_learning_rate,
+                                      total_steps=self.total_steps,
+                                      end_learning_rate=self.end_learning_rate,
+                                      divide_factor=self.divide_factor,
+                                      phase_pct=self.phase_pct,
+                                      anneal_strategy=self.anneal_strategy,
+                                      three_phase=self.three_phase,
+                                      last_epoch=self.last_epoch,
+                                      verbose=self.verbose)
+
+        if self.warmup_steps > 0:
+            learning_rate = self.linear_warmup(learning_rate)
+            setattr(learning_rate, "by_epoch", self.by_epoch)
+            return learning_rate
