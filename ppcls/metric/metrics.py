@@ -529,7 +529,7 @@ class MultiLabelMAP(nn.Layer):
 
     Args:
         class_num (int): The class number.
-        map_type (str): Calculation method of mean average
+        map_type (str): Calculation method of mean average.
     """
 
     def __init__(self, class_num=80, map_type='integral'):
