@@ -22,6 +22,7 @@ from .bnneck import BNNeck
 from .adamargin import AdaMargin
 from .frfn_neck import FRFNNeck
 from .metabnneck import MetaBNNeck
+from .ml_decoder import MLDecoder
 
 __all__ = ['build_gear']
 
@@ -29,7 +30,7 @@ __all__ = ['build_gear']
 def build_gear(config):
     support_dict = [
         'ArcMargin', 'CosMargin', 'CircleMargin', 'FC', 'VehicleNeck', 'Tanh',
-        'BNNeck', 'AdaMargin', 'FRFNNeck', 'MetaBNNeck'
+        'BNNeck', 'AdaMargin', 'FRFNNeck', 'MetaBNNeck', 'MLDecoder'
     ]
     module_name = config.pop('name')
     assert module_name in support_dict, Exception(
