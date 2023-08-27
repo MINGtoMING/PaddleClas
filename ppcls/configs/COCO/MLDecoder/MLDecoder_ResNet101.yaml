@@ -68,12 +68,11 @@ Loss:
 
 Optimizer:
   name: Adam
+  weight_decay: 0.0004
   lr:
-    name: Cosine
-    learning_rate: 0.001
-  regularizer:
-    name: 'L2'
-    coeff: 0.00004
+    name: OneCycleLR
+    max_learning_rate: 0.001
+    phase_pct: 0.2
 
 
 # data loader for train and eval
