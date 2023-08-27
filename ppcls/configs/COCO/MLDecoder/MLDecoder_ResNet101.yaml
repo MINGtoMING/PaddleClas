@@ -156,8 +156,6 @@ Infer:
 
 Metric:
   Train:
-    - MultiLabelMAP:
-        map_type: integral
 
   Eval:
     - MultiLabelMAP:
