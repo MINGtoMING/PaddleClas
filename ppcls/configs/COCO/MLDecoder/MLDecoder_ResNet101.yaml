@@ -83,6 +83,7 @@ DataLoader:
       name: COCODataset
       image_root: "H:/PaddleCV/ML_Decoder/MSCOCO_2014/val2014"
       cls_label_path: "H:/PaddleCV/ML_Decoder/MSCOCO_2014/annotations/instances_val2014.json"
+      merge_all: True
       transform_ops:
         - DecodeImage:
             to_rgb: True
@@ -98,10 +99,9 @@ DataLoader:
             mean: [0.0, 0.0, 0.0]
             std: [1.0, 1.0, 1.0]
             order: ''
-
     sampler:
       name: DistributedBatchSampler
-      batch_size: 64
+      batch_size: 8
       drop_last: False
       shuffle: True
     loader:
@@ -113,6 +113,7 @@ DataLoader:
       name: COCODataset
       image_root: "H:/PaddleCV/ML_Decoder/MSCOCO_2014/val2014"
       cls_label_path: "H:/PaddleCV/ML_Decoder/MSCOCO_2014/annotations/instances_val2014.json"
+      merge_all: True
       transform_ops:
         - DecodeImage:
             to_rgb: True
@@ -126,7 +127,7 @@ DataLoader:
             order: ''
     sampler:
       name: DistributedBatchSampler
-      batch_size: 256
+      batch_size: 8
       drop_last: False
       shuffle: False
     loader:
