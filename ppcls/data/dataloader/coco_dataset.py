@@ -66,12 +66,12 @@ class COCODataset(CommonDataset):
             instances = coco.loadAnns(ins_anno_ids)
             if self.merge_all:
                 # all
-                gt_label = np.zeros((len(cat_ids), ), dtype=np.int64)
+                gt_label = np.zeros((len(cat_ids), ), dtype=np.float32)
                 for inst in instances:
                     gt_label[catid2clsid[inst['category_id']]] = 1
             else:
                 # small, medium and large
-                gt_label = np.zeros((3, len(cat_ids)), dtype=np.int64)
+                gt_label = np.zeros((3, len(cat_ids)), dtype=np.float32)
                 for inst in instances:
                     area_id = self._get_coco_area_id(inst['area'])
                     gt_label[area_id][catid2clsid[inst['category_id']]] = 1
