@@ -47,7 +47,7 @@ class GroupFC(nn.Layer):
         return out
 
 
-class RemovalSelfAttention(nn.Layer):
+class RemovalSelfAttn(nn.Layer):
 
     def __init__(self):
         super().__init__()
@@ -85,10 +85,12 @@ class MLDecoder(nn.Layer):
         # build input project
         self.input_proj = nn.Linear(in_chans, embed_dim)
 
-        # build TransformerDecoderLayerOptimal
+        # build TransformerDecoderLayer
         docoder_layer = nn.TransformerDecoderLayer(
             embed_dim, num_heads, mlp_hidden_dim, dropout)
-        docoder_layer.self_attn = RemovalSelfAttention()
+
+        # apply RemovalSelfAttn to TransformerDecoderLayer
+        docoder_layer.self_attn = RemovalSelfAttn()
         self.decoder = nn.TransformerDecoder(docoder_layer, depth)
 
         # build group fully connected weight and bias
@@ -106,7 +108,7 @@ class MLDecoder(nn.Layer):
         # input proj
         img_embed = input.flatten(2).transpose((0, 2, 1))
         img_embed = F.relu(self.input_proj(img_embed))
-        # TransformerDecoderLayer with RemovalSelfAttention
+        # TransformerDecoderLayer with RemovalSelfAttn
         query_embed = paddle.tile(self.query_embed[None], [batch_size, 1, 1])
         out_embed = self.decoder(query_embed, img_embed)
         # group fully connected
