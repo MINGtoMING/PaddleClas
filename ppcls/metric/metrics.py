@@ -643,14 +643,15 @@ class MultiLabelMAP(nn.Layer):
             gt_label = gt_labels[:, class_idx]
             self.one_class_update(score, gt_label, class_idx)
 
-        self.compute_mAP()
-
-        return {f"MultiLabelMAP({self.map_type})": self.mAP}
+        metric_dict = dict()
+        return metric_dict
 
     @property
     def avg(self):
+        self.compute_mAP()
         return self.mAP
 
     @property
     def avg_info(self):
+        self.compute_mAP()
         return f"MultiLabelMAP({self.map_type}): {self.mAP:.5f}"

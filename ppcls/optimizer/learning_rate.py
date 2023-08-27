@@ -682,5 +682,6 @@ class OneCycleLR(LRBase):
 
         if self.warmup_steps > 0:
             learning_rate = self.linear_warmup(learning_rate)
-            setattr(learning_rate, "by_epoch", self.by_epoch)
-            return learning_rate
+
+        setattr(learning_rate, "by_epoch", self.by_epoch)
+        return learning_rate
