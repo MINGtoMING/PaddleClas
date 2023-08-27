@@ -41,8 +41,6 @@ class GroupFC(nn.Layer):
         self.bias = self.create_parameter([class_num], is_bias=True)
 
     def forward(self, input):
-        print(input.shape)
-        print(self.weight.shape)
         out = input.transpose((1, 0, 2)) @ self.weight
         out = out.transpose((1, 0, 2)).flatten(1)
         out = out[:, :self.class_num] + self.bias
