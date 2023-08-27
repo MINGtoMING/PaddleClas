@@ -631,6 +631,8 @@ class MultiLabelMAP(nn.Layer):
         self.mAP = mAP / float(valid_cnt) if valid_cnt > 0 else mAP
 
     def forward(self, output, target):
+        if isinstance(output, dict):
+            output = output["logits"]
         assert self.class_num == output.shape[1], \
             f"class_num should be {output.shape[1]}"
         scores = F.sigmoid(output).numpy()
