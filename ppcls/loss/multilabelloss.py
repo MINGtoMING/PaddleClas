@@ -98,4 +98,5 @@ class MultiLabelASL(nn.Layer):
             paddle.set_grad_enabled(True)
 
         loss = -paddle.log(pt.clip(min=self.eps)) * asymmetric_weight
-        return {"MultiLabelASL": loss.sum()}
+        loss = loss.mean()
+        return {"MultiLabelASL": loss}
