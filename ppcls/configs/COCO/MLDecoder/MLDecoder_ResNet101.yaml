@@ -77,8 +77,8 @@ DataLoader:
   Train:
     dataset:
       name: COCODataset
-      image_root: ./dataset/NUS-WIDE-SCENE/NUS-SCENE-dataset/images/
-      cls_label_path: ./dataset/NUS-WIDE-SCENE/NUS-SCENE-dataset/multilabel_train_list.txt
+      image_root: "H:/PaddleCV/ML_Decoder/MSCOCO_2014/val2014"
+      cls_label_path: "H:/PaddleCV/ML_Decoder/MSCOCO_2014/annotations/instances_val2014.json"
       transform_ops:
         - DecodeImage:
             to_rgb: True
@@ -107,8 +107,8 @@ DataLoader:
   Eval:
     dataset:
       name: COCODataset
-      image_root: ./dataset/NUS-WIDE-SCENE/NUS-SCENE-dataset/images/
-      cls_label_path: ./dataset/NUS-WIDE-SCENE/NUS-SCENE-dataset/multilabel_test_list.txt
+      image_root: "H:/PaddleCV/ML_Decoder/MSCOCO_2014/val2014"
+      cls_label_path: "H:/PaddleCV/ML_Decoder/MSCOCO_2014/annotations/instances_val2014.json"
       transform_ops:
         - DecodeImage:
             to_rgb: True
@@ -147,13 +147,15 @@ Infer:
   PostProcess:
     name: MultiLabelThreshOutput
     threshold: 0.5
-    class_id_map_file: "ppcls/utils/NUS-WIDE-SCENE_label_list.txt"
+    class_id_map_file: "ppcls/utils/COCO2014_label_list.txt"
     delimiter: " "
 
 Metric:
   Train:
-    - AccuracyScore:
-    - HammingDistance:
+    - MultiLabelMAP:
+        map_type: integral
+
   Eval:
-    - AccuracyScore:
-    - HammingDistance:
+    - MultiLabelMAP:
+        map_type: integral
+
