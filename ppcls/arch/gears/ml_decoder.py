@@ -103,7 +103,7 @@ class MLDecoder(nn.Layer):
         xavier_normal_(self.group_fc.weight)
         zeros_(self.group_fc.bias)
 
-    def forward(self, input):
+    def forward(self, input, label=None):
         batch_size = input.shape[0]
         # input proj
         img_embed = input.flatten(2).transpose((0, 2, 1))
