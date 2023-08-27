@@ -114,3 +114,10 @@ class MLDecoder(nn.Layer):
         # group fully connected
         out = self.group_fc(out_embed)
         return out
+
+
+if __name__ == "__main__":
+    from ppcls import RecModel
+    from ppcls.utils.logger import init_logger
+    init_logger()
+    model = RecModel()
