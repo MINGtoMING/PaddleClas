@@ -45,22 +45,28 @@ Arch:
     mlp_hidden_dim: 2048
     dropout: 0.1
 
-# loss function config for traing/eval process
+# loss function config for training/eval process
 Loss:
   Train:
-    - MultiLabelLoss:
+    - MultiLabelASL:
         weight: 1.0
+        gamma_pos: 0
+        gamma_neg: 4
+        clip: 0.05
+
   Eval:
-    - MultiLabelLoss:
+    - MultiLabelASL:
         weight: 1.0
+        gamma_pos: 0
+        gamma_neg: 4
+        clip: 0.05
 
 
 Optimizer:
-  name: Momentum
-  momentum: 0.9
+  name: Adam
   lr:
     name: Cosine
-    learning_rate: 0.1
+    learning_rate: 0.0001
   regularizer:
     name: 'L2'
     coeff: 0.00004
@@ -70,21 +76,23 @@ Optimizer:
 DataLoader:
   Train:
     dataset:
-      name: MultiLabelDataset
+      name: COCODataset
       image_root: ./dataset/NUS-WIDE-SCENE/NUS-SCENE-dataset/images/
       cls_label_path: ./dataset/NUS-WIDE-SCENE/NUS-SCENE-dataset/multilabel_train_list.txt
       transform_ops:
         - DecodeImage:
             to_rgb: True
             channel_first: False
-        - RandCropImage:
-            size: 224
-        - RandFlipImage:
-            flip_code: 1
+        - ResizeImage:
+            size: 448
+        - Cutout:
+            n_holes: 1
+            length: 224
+        - RandAugment:
         - NormalizeImage:
             scale: 1.0/255.0
-            mean: [0.485, 0.456, 0.406]
-            std: [0.229, 0.224, 0.225]
+            mean: [0.0, 0.0, 0.0]
+            std: [1.0, 1.0, 1.0]
             order: ''
 
     sampler:
@@ -93,12 +101,12 @@ DataLoader:
       drop_last: False
       shuffle: True
     loader:
-      num_workers: 4
+      num_workers: 0
       use_shared_memory: True
 
   Eval:
     dataset:
-      name: MultiLabelDataset
+      name: COCODataset
       image_root: ./dataset/NUS-WIDE-SCENE/NUS-SCENE-dataset/images/
       cls_label_path: ./dataset/NUS-WIDE-SCENE/NUS-SCENE-dataset/multilabel_test_list.txt
       transform_ops:
@@ -106,13 +114,11 @@ DataLoader:
             to_rgb: True
             channel_first: False
         - ResizeImage:
-            resize_short: 256
-        - CropImage:
-            size: 224
+            size: 448
         - NormalizeImage:
             scale: 1.0/255.0
-            mean: [0.485, 0.456, 0.406]
-            std: [0.229, 0.224, 0.225]
+            mean: [0.0, 0.0, 0.0]
+            std: [1.0, 1.0, 1.0]
             order: ''
     sampler:
       name: DistributedBatchSampler
@@ -120,7 +126,7 @@ DataLoader:
       drop_last: False
       shuffle: False
     loader:
-      num_workers: 4
+      num_workers: 0
       use_shared_memory: True
 
 Infer:
@@ -131,13 +137,11 @@ Infer:
         to_rgb: True
         channel_first: False
     - ResizeImage:
-        resize_short: 256
-    - CropImage:
-        size: 224
+        size: 448
     - NormalizeImage:
         scale: 1.0/255.0
-        mean: [0.485, 0.456, 0.406]
-        std: [0.229, 0.224, 0.225]
+        mean: [0.0, 0.0, 0.0]
+        std: [1.0, 1.0, 1.0]
         order: ''
     - ToCHWImage:
   PostProcess:
