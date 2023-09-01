@@ -1,0 +1,126 @@
+# global configs
+Global:
+  checkpoints: null
+  pretrained_model: null
+  output_dir: ./output/
+  device: gpu
+  save_interval: 1
+  eval_during_train: True
+  eval_interval: 1
+  epochs: 40
+  print_batch_step: 10
+  use_visualdl: False
+  # used for static mode and model export
+  image_shape: [3, 224, 224]
+  save_inference_dir: ./inference
+  # training model under @to_static
+  to_static: False
+
+# model ema
+EMA:
+  decay: 0.9997
+
+# mixed precision
+AMP:
+  use_amp: False
+  use_fp16_test: False
+  scale_loss: 128.0
+  use_dynamic_loss_scaling: True
+  use_promote: False
+  # O1: mixed fp16, O2: pure fp16
+  level: O1
+
+# model architecture
+Arch:
+  name: ResNet50
+  class_num: 80
+  pretrained: True
+
+# loss function config for training/eval process
+Loss:
+  Train:
+    - MultiLabelASL:
+        weight: 1.0
+        gamma_pos: 0
+        gamma_neg: 4
+        clip: 0.05
+        disable_focal_loss_grad: True
+
+  Eval:
+    - MultiLabelASL:
+        weight: 1.0
+        gamma_pos: 0
+        gamma_neg: 4
+        clip: 0.05
+
+Optimizer:
+  name: AdamW
+  weight_decay: 0.0001
+  one_dim_param_no_weight_decay: True
+  lr:
+    name: OneCycleLR
+    max_learning_rate: 0.0001
+    phase_pct: 0.2
+
+# data loader for train and eval
+DataLoader:
+  Train:
+    dataset:
+      name: COCODataset
+      image_root: ./dataset/COCO2017/val2017/
+      cls_label_path: ./dataset/COCO2017/annotations/instances_val2017.json
+      transform_ops:
+        - DecodeImage:
+            to_rgb: True
+            channel_first: False
+        - ResizeImage:
+            size: 224
+        - Cutout:
+            n_holes: 1
+            length: 112
+        - RandAugment:
+        - NormalizeImage:
+            scale: 1.0/255.0
+            mean: [0.0, 0.0, 0.0]
+            std: [1.0, 1.0, 1.0]
+            order: ''
+
+    sampler:
+      name: DistributedBatchSampler
+      batch_size: 8
+      drop_last: False
+      shuffle: True
+    loader:
+      num_workers: 0
+      use_shared_memory: True
+
+  Eval:
+    dataset:
+      name: COCODataset
+      image_root: ./dataset/COCO2017/val2017/
+      cls_label_path: ./dataset/COCO2017/annotations/instances_val2017.json
+      transform_ops:
+        - DecodeImage:
+            to_rgb: True
+            channel_first: False
+        - ResizeImage:
+            size: 224
+        - NormalizeImage:
+            scale: 1.0/255.0
+            mean: [0.0, 0.0, 0.0]
+            std: [1.0, 1.0, 1.0]
+            order: ''
+    sampler:
+      name: DistributedBatchSampler
+      batch_size: 1
+      drop_last: False
+      shuffle: False
+    loader:
+      num_workers: 0
+      use_shared_memory: True
+
+Metric:
+  Train:
+  Eval:
+    - MultiLabelMAP:
+        class_num: 80
