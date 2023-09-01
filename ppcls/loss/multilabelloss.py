@@ -62,3 +62,47 @@ class MultiLabelLoss(nn.Layer):
         loss = self._binary_crossentropy(x, target, class_num)
         loss = loss.mean()
         return {"MultiLabelLoss": loss}
+
+
+class MultiLabelASL(nn.Layer):
+    """
+    Multi-label asymmetric loss
+    """
+    def __init__(self, gamma_pos=1, gamma_neg=4, clip=0.05,
+                 eps=1e-8, disable_focal_loss_grad=True, reduction="sum"):
+        super().__init__()
+        self.gamma_pos = gamma_pos
+        self.gamma_neg = gamma_neg
+        self.clip = clip
+        self.eps = eps
+        self.disable_focal_loss_grad = disable_focal_loss_grad
+        self.reduction = reduction
+
+    def forward(self, x, target):
+        if isinstance(x, dict):
+            x = x["logits"]
+        pred_sigmoid = F.sigmoid(x)
+
+        # Asymmetric Clipping and Basic CE calculation
+        if self.clip and self.clip > 0:
+            pt = (1 - pred_sigmoid + self.clip).clip(max=1) \
+                 * (1 - target) + pred_sigmoid * target
+        else:
+            pt = (1 - pred_sigmoid) * (1 - target) + pred_sigmoid * target
+
+        # Asymmetric Focusing
+        if self.disable_focal_loss_grad:
+            paddle.set_grad_enabled(False)
+        asymmetric_weight = (1 - pt).pow(
+            self.gamma_pos * target + self.gamma_neg * (1 - target))
+        if self.disable_focal_loss_grad:
+            paddle.set_grad_enabled(True)
+
+        loss = -paddle.log(pt.clip(min=self.eps)) * asymmetric_weight
+        if self.reduction.lower() == "sum":
+            loss = loss.sum()
+        elif self.reduction.lower() == "mean":
+            loss = loss.mean()
+        else:
+            raise NotImplementedError(self.reduction)
+        return {"MultiLabelASL": loss}
