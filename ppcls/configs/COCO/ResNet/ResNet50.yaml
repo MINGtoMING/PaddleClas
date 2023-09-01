@@ -15,6 +15,7 @@ Global:
   save_inference_dir: ./inference
   # training model under @to_static
   to_static: False
+  use_multilabel: True
 
 # model ema
 EMA:

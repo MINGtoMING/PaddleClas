@@ -15,6 +15,7 @@ Global:
   save_inference_dir: ./inference
   # training model under @to_static
   to_static: False
+  use_multilabel: True
 
 # model ema
 EMA:
@@ -22,7 +23,7 @@ EMA:
 
 # mixed precision
 AMP:
-  use_amp: False
+  use_amp: True
   use_fp16_test: False
   scale_loss: 128.0
   use_dynamic_loss_scaling: True
@@ -58,6 +59,7 @@ Loss:
         gamma_pos: 0
         gamma_neg: 4
         clip: 0.05
+        disable_focal_loss_grad: True
 
 Optimizer:
   name: AdamW
@@ -93,7 +95,7 @@ DataLoader:
 
     sampler:
       name: DistributedBatchSampler
-      batch_size: 4
+      batch_size: 8
       drop_last: False
       shuffle: True
     loader:
