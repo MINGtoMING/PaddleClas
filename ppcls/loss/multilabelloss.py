@@ -85,16 +85,16 @@ class MultiLabelASL(nn.Layer):
 
         # Asymmetric Clipping and Basic CE calculation
         if self.clip and self.clip > 0:
-            pt = (1 - pred_sigmoid + self.clip).clip(max=1) \
-                 * (1 - target) + pred_sigmoid * target
+            pt = (1. - pred_sigmoid + self.clip).clip(max=1) \
+                 * (1. - target) + pred_sigmoid * target
         else:
-            pt = (1 - pred_sigmoid) * (1 - target) + pred_sigmoid * target
+            pt = (1. - pred_sigmoid) * (1. - target) + pred_sigmoid * target
 
         # Asymmetric Focusing
         if self.disable_focal_loss_grad:
             paddle.set_grad_enabled(False)
-        asymmetric_weight = (1 - pt).pow(
-            self.gamma_pos * target + self.gamma_neg * (1 - target))
+        asymmetric_weight = (1. - pt).pow(
+            self.gamma_pos * target + self.gamma_neg * (1. - target))
         if self.disable_focal_loss_grad:
             paddle.set_grad_enabled(True)
 
