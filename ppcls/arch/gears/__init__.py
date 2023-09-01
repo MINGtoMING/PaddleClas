@@ -22,8 +22,9 @@ from .bnneck import BNNeck
 from .adamargin import AdaMargin
 from .frfn_neck import FRFNNeck
 from .metabnneck import MetaBNNeck
+from .ml_decoder import MLDecoder
 
-__all__ = ['build_gear']
+__all__ = ['build_gear', 'MLDecoder']
 
 
 def build_gear(config):
