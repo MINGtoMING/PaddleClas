@@ -37,9 +37,10 @@ class ChoiceIdentity(nn.Layer):
         super().__init__()
         self.index = index
 
-    def single_choice(self, index=None, *args, **kwargs):
+    def single_choice(self, *args, **kwargs):
+        index = kwargs.pop("index")
         if isinstance(index, int):
-            assert 0 < index < len(args), \
+            assert 0 <= index < len(args), \
                 f"Index {index} will be out of range!!!"
             return args[index]
         elif isinstance(index, str):
@@ -52,10 +53,13 @@ class ChoiceIdentity(nn.Layer):
 
     def forward(self, *args, **kwargs):
         if isinstance(self.index, (list, tuple)):
-            return [self.single_choice(
-                index=idx, *args, **kwargs) for idx in self.index]
+            output = []
+            for idx in self.index:
+                kwargs["index"] = idx
+                output.append(self.single_choice(*args, **kwargs))
         else:
-            return self.single_choice(index=self.index, *args, **kwargs)
+            kwargs["index"] = self.index
+            return self.single_choice(*args, **kwargs)
 
 
 class MLDecoder(nn.Layer):
@@ -100,7 +104,7 @@ class MLDecoder(nn.Layer):
             attn_dropout=dropout,
             act_dropout=dropout)
         if self_attn_removal:
-            decoder_layer.self_attn = ChoiceIdentity(index="query")
+            decoder_layer.self_attn = ChoiceIdentity(index=0)
         self.decoder = nn.TransformerDecoder(
             decoder_layer=decoder_layer,
             num_layers=depth)

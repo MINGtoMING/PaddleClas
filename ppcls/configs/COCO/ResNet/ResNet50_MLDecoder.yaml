@@ -128,6 +128,27 @@ DataLoader:
       num_workers: 0
       use_shared_memory: False
 
+Infer:
+  infer_imgs: dataset/COCO2017/val2017/000000005193.jpg
+  batch_size: 10
+  transforms:
+    - DecodeImage:
+        to_rgb: True
+        channel_first: False
+    - ResizeImage:
+        size: 224
+    - NormalizeImage:
+        scale: 1.0/255.0
+        mean: [ 0.0, 0.0, 0.0 ]
+        std: [ 1.0, 1.0, 1.0 ]
+        order: ''
+    - ToCHWImage:
+  PostProcess:
+    name: MultiLabelThreshOutput
+    threshold: 0.5
+    class_id_map_file: "ppcls/utils/coco_label_list.txt"
+    delimiter: " "
+
 Metric:
   Train:
   Eval:
