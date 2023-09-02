@@ -649,7 +649,7 @@ class OneCycleLR(LRBase):
                  warmup_epoch=0,
                  warmup_start_lr=0.0,
                  divide_factor=25.0,
-                 end_learning_rate=0.0001,
+                 end_learning_rate=0.0,
                  phase_pct=0.3,
                  anneal_strategy='cos',
                  three_phase=False,
