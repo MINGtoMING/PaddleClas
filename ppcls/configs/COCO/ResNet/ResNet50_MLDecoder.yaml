@@ -40,7 +40,7 @@ Arch:
 
 MLDecoder:
   class_num: 80
-  query_num: 100
+  query_num: 80
   in_chans: 2048
 
 # loss function config for training/eval process
@@ -67,7 +67,7 @@ Optimizer:
   one_dim_param_no_weight_decay: True
   lr:
     name: OneCycleLR
-    max_learning_rate: 0.0001
+    max_learning_rate: 0.001
     phase_pct: 0.2
 
 # data loader for train and eval
@@ -100,7 +100,7 @@ DataLoader:
       shuffle: True
     loader:
       num_workers: 0
-      use_shared_memory: True
+      use_shared_memory: False
 
   Eval:
     dataset:
@@ -120,12 +120,12 @@ DataLoader:
             order: ''
     sampler:
       name: DistributedBatchSampler
-      batch_size: 1
+      batch_size: 8
       drop_last: False
       shuffle: False
     loader:
       num_workers: 0
-      use_shared_memory: True
+      use_shared_memory: False
 
 Metric:
   Train:
