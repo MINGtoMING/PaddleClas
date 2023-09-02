@@ -23,7 +23,7 @@ EMA:
 
 # mixed precision
 AMP:
-  use_amp: False
+  use_amp: True
   use_fp16_test: False
   scale_loss: 128.0
   use_dynamic_loss_scaling: True
@@ -36,6 +36,14 @@ Arch:
   name: ResNet50
   class_num: 80
   pretrained: True
+  # use ml-decoder head to replace avg_pool and fc
+  use_ml_decoder: True
+
+# ml-decoder head
+MLDecoder:
+  class_num: 80
+  query_num: 80
+  in_chans: 2048
 
 # loss function config for training/eval process
 Loss:
@@ -53,15 +61,18 @@ Loss:
         gamma_pos: 0
         gamma_neg: 4
         clip: 0.05
+        disable_focal_loss_grad: True
 
 Optimizer:
   name: AdamW
   weight_decay: 0.0001
   one_dim_param_no_weight_decay: True
   lr:
-    name: OneCycleLR
-    max_learning_rate: 0.0001
-    phase_pct: 0.2
+    name: Cosine
+    learning_rate: 0.0001
+    eta_min: 0.0
+    warmup_epoch: 8
+    warmup_start_lr: 4e-6
 
 # data loader for train and eval
 DataLoader:
@@ -93,7 +104,7 @@ DataLoader:
       shuffle: True
     loader:
       num_workers: 0
-      use_shared_memory: True
+      use_shared_memory: False
 
   Eval:
     dataset:
@@ -113,12 +124,33 @@ DataLoader:
             order: ''
     sampler:
       name: DistributedBatchSampler
-      batch_size: 1
+      batch_size: 8
       drop_last: False
       shuffle: False
     loader:
       num_workers: 0
-      use_shared_memory: True
+      use_shared_memory: False
+
+Infer:
+  infer_imgs: deploy/images/coco_000000570688.jpg
+  batch_size: 10
+  transforms:
+    - DecodeImage:
+        to_rgb: True
+        channel_first: False
+    - ResizeImage:
+        size: 224
+    - NormalizeImage:
+        scale: 1.0/255.0
+        mean: [ 0.0, 0.0, 0.0 ]
+        std: [ 1.0, 1.0, 1.0 ]
+        order: ''
+    - ToCHWImage:
+  PostProcess:
+    name: MultiLabelThreshOutput
+    threshold: 0.5
+    class_id_map_file: "ppcls/utils/coco_label_list.txt"
+    delimiter: " "
 
 Metric:
   Train:

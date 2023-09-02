@@ -36,12 +36,6 @@ Arch:
   name: ResNet50
   class_num: 80
   pretrained: True
-  use_ml_decoder: True
-
-MLDecoder:
-  class_num: 80
-  query_num: 80
-  in_chans: 2048
 
 # loss function config for training/eval process
 Loss:
@@ -129,7 +123,7 @@ DataLoader:
       use_shared_memory: False
 
 Infer:
-  infer_imgs: dataset/COCO2017/val2017/000000005193.jpg
+  infer_imgs: deploy/images/coco_000000570688.jpg
   batch_size: 10
   transforms:
     - DecodeImage:
