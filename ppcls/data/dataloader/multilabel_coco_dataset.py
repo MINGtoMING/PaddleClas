@@ -83,7 +83,7 @@ class MultiLabelCOCODataset(Dataset):
             ins_anno_ids = coco.getAnnIds(imgIds=[img_id])
             instances = coco.loadAnns(ins_anno_ids)
 
-            label = np.zeros([len(cat_ids)], dtype=np.uint8)
+            label = np.zeros([len(cat_ids)], dtype=np.float32)
             for instance in instances:
                 label[catid2clsid[instance['category_id']]] = 1
 
