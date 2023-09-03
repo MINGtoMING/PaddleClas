@@ -17,6 +17,7 @@ from ppcls.data.preprocess.ops.randaugment import RandAugment as RawRandAugment
 from ppcls.data.preprocess.ops.randaugment import RandomApply
 from ppcls.data.preprocess.ops.randaugment import RandAugmentV2 as RawRandAugmentV2
 from ppcls.data.preprocess.ops.randaugment import RandAugmentV3 as RawRandAugmentV3
+from ppcls.data.preprocess.ops.randaugment import RandAugmentV4 as RawRandAugmentV4
 from ppcls.data.preprocess.ops.timm_autoaugment import RawTimmAutoAugment
 from ppcls.data.preprocess.ops.cutout import Cutout, CutoutPIL
 
