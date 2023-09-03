@@ -144,6 +144,25 @@ class RandAugmentV3(RawRandAugmentV3):
         return img
 
 
+class RandAugmentV4(RawRandAugmentV4):
+    """ RandAugmentV4 wrapper to auto fit different img types """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def __call__(self, img):
+        if not isinstance(img, Image.Image):
+            img = np.ascontiguousarray(img)
+            img = Image.fromarray(img)
+
+        img = super().__call__(img)
+
+        if isinstance(img, Image.Image):
+            img = np.asarray(img)
+
+        return img
+
+
 class TimmAutoAugment(RawTimmAutoAugment):
     """ TimmAutoAugment wrapper to auto fit different img tyeps. """
 
