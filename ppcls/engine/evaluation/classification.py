@@ -130,6 +130,11 @@ def classification_eval(engine, epoch_id=0):
 
             if "ATTRMetric" in engine.config["Metric"]["Eval"][0]:
                 metric_msg = ""
+            elif "MultiLabelMAP" in engine.config["Metric"]["Eval"][0]:
+                metric_msg = ", ".join([
+                    "{}: {:.5f}".format(key, output_info[key].val)
+                    for key in output_info
+                ])
             else:
                 metric_msg = ", ".join([
                     "{}: {:.5f}".format(key, output_info[key].val)

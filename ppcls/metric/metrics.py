@@ -577,61 +577,62 @@ class MultiLabelMAP(nn.Layer):
         return accum_tp_list, accum_fp_list
 
     def compute_mAP(self):
-        mAP = 0.
-        valid_cnt = 0
-        for score_pos, count in zip(self.class_score_poss,
-                                    self.class_gt_counts):
-            if count == 0:
-                continue
+        if not self.is_latest:
+            mAP = 0.
+            valid_cnt = 0
+            for score_pos, count in zip(self.class_score_poss,
+                                        self.class_gt_counts):
+                if count == 0:
+                    continue
 
-            if len(score_pos) == 0:
-                valid_cnt += 1
-                continue
+                if len(score_pos) == 0:
+                    valid_cnt += 1
+                    continue
 
-            accum_tp_list, accum_fp_list = \
-                self.get_tp_fp_accum(score_pos)
-            precision = []
-            recall = []
-            for ac_tp, ac_fp in zip(accum_tp_list, accum_fp_list):
-                precision.append(float(ac_tp) / (ac_tp + ac_fp))
-                recall.append(float(ac_tp) / count)
+                accum_tp_list, accum_fp_list = \
+                    self.get_tp_fp_accum(score_pos)
+                precision = []
+                recall = []
+                for ac_tp, ac_fp in zip(accum_tp_list, accum_fp_list):
+                    precision.append(float(ac_tp) / (ac_tp + ac_fp))
+                    recall.append(float(ac_tp) / count)
 
-            one_class_ap = 0.0
-            if self.map_type == '11point':
-                max_precisions = [0.] * 11
-                start_idx = len(precision) - 1
-                for j in range(10, -1, -1):
-                    for i in range(start_idx, -1, -1):
-                        if recall[i] < float(j) / 10.:
-                            start_idx = i
-                            if j > 0:
-                                max_precisions[j - 1] = max_precisions[j]
-                                break
-                        else:
-                            if max_precisions[j] < precision[i]:
-                                max_precisions[j] = precision[i]
-                one_class_ap = sum(max_precisions) / 11.
-                mAP += one_class_ap
-                valid_cnt += 1
-            elif self.map_type == 'integral':
-                import math
-                prev_recall = 0.
-                for i in range(len(precision)):
-                    recall_gap = math.fabs(recall[i] - prev_recall)
-                    if recall_gap > 1e-6:
-                        one_class_ap += precision[i] * recall_gap
-                        prev_recall = recall[i]
-                mAP += one_class_ap
-                valid_cnt += 1
-            else:
-                raise NotImplementedError(
-                    f"Unsupported mAP type {self.map_type}")
+                one_class_ap = 0.0
+                if self.map_type == '11point':
+                    max_precisions = [0.] * 11
+                    start_idx = len(precision) - 1
+                    for j in range(10, -1, -1):
+                        for i in range(start_idx, -1, -1):
+                            if recall[i] < float(j) / 10.:
+                                start_idx = i
+                                if j > 0:
+                                    max_precisions[j - 1] = max_precisions[j]
+                                    break
+                            else:
+                                if max_precisions[j] < precision[i]:
+                                    max_precisions[j] = precision[i]
+                    one_class_ap = sum(max_precisions) / 11.
+                    mAP += one_class_ap
+                    valid_cnt += 1
+                elif self.map_type == 'integral':
+                    import math
+                    prev_recall = 0.
+                    for i in range(len(precision)):
+                        recall_gap = math.fabs(recall[i] - prev_recall)
+                        if recall_gap > 1e-6:
+                            one_class_ap += precision[i] * recall_gap
+                            prev_recall = recall[i]
+                    mAP += one_class_ap
+                    valid_cnt += 1
+                else:
+                    raise NotImplementedError(
+                        f"Unsupported mAP type {self.map_type}")
 
-        self.mAP = mAP / float(valid_cnt) if valid_cnt > 0 else mAP
+            self.mAP = mAP / float(valid_cnt) if valid_cnt > 0 else mAP
+
+            self.is_latest = True
 
     def forward(self, output, target):
-        assert self.class_num == output.shape[1], \
-            f"class_num should be {output.shape[1]}"
         scores = F.sigmoid(output).numpy()
         gt_labels = target.numpy()
 
@@ -640,7 +641,7 @@ class MultiLabelMAP(nn.Layer):
         if self.class_gt_counts is None:
             self.class_gt_counts = [0] * scores.shape[-1]
 
-        for class_idx in range(self.class_num):
+        for class_idx in range(scores.shape[-1]):
             score = scores[:, class_idx]
             gt_label = gt_labels[:, class_idx]
             self.one_class_update(score, gt_label, class_idx)
@@ -652,10 +653,9 @@ class MultiLabelMAP(nn.Layer):
     @property
     def avg_info(self):
         self.compute_mAP()
-        self.is_latest = True
         return f"MultiLabelMAP({self.map_type}) = {self.mAP * 100.:.2f}%"
 
     @property
     def avg(self):
-        assert self.is_latest
+        self.compute_mAP()
         return self.mAP
