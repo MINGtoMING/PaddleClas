@@ -68,11 +68,13 @@ Optimizer:
   weight_decay: 0.0001
   one_dim_param_no_weight_decay: True
   lr:
-    name: Cosine
-    learning_rate: 0.0001
-    eta_min: 0.0
-    warmup_epoch: 8
-    warmup_start_lr: 4e-6
+    name: OneCycleLR
+    max_learning_rate: 0.0001
+    divide_factor: 25.0
+    end_learning_rate: 0.0
+    phase_pct: 0.2
+    anneal_strategy: "cos"
+    three_phase: False
 
 # data loader for train and eval
 DataLoader:
@@ -90,7 +92,8 @@ DataLoader:
         - Cutout:
             n_holes: 1
             length: 112
-        - RandAugment:
+        - RandAugmentV4:
+            magnitude: 10
         - NormalizeImage:
             scale: 1.0/255.0
             mean: [0.0, 0.0, 0.0]
@@ -124,7 +127,7 @@ DataLoader:
             order: ''
     sampler:
       name: DistributedBatchSampler
-      batch_size: 8
+      batch_size: 16
       drop_last: False
       shuffle: False
     loader:

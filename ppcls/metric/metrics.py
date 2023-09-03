@@ -653,7 +653,7 @@ class MultiLabelMAP(nn.Layer):
     def avg_info(self):
         if not self.is_latest:
             self.compute_mAP()
-        return f"MultiLabelMAP({self.map_type}): {self.mAP:.5f}"
+        return f"MultiLabelMAP({self.map_type}) = {self.mAP * 100.:.2f}%"
 
     @property
     def avg(self):

@@ -18,13 +18,14 @@ from __future__ import print_function
 
 import math
 
+import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
 from paddle.nn.initializer import XavierNormal, Constant, Normal
 
 xavier_normal_ = XavierNormal()
 normal_ = Normal
-zeros_ = Constant(value=0.)
+zeros_ = Constant(value=0.0)
 
 
 class ChoiceIdentity(nn.Layer):
@@ -78,11 +79,13 @@ class MLDecoder(nn.Layer):
                  mlp_hidden_dim=2048,
                  dropout=0.1,
                  activation="relu",
-                 self_attn_removal=True):
+                 freeze_query_embed=True,
+                 remove_self_attn=True):
         super().__init__()
         self.class_num = class_num
         self.in_chans = in_chans
 
+        # 1 <= query_num <= class_num
         query_num = min(max(query_num, 1), class_num)
 
         self.input_proj = nn.Conv2D(
@@ -94,6 +97,8 @@ class MLDecoder(nn.Layer):
         self.query_pos_embed = nn.Embedding(
             num_embeddings=query_num,
             embedding_dim=embed_dim)
+        if freeze_query_embed:
+            self.query_pos_embed.weight.stop_gradient = True
 
         decoder_layer = nn.TransformerDecoderLayer(
             d_model=embed_dim,
@@ -103,7 +108,7 @@ class MLDecoder(nn.Layer):
             activation=activation,
             attn_dropout=dropout,
             act_dropout=dropout)
-        if self_attn_removal:
+        if remove_self_attn:
             decoder_layer.self_attn = ChoiceIdentity(index=0)
         self.decoder = nn.TransformerDecoder(
             decoder_layer=decoder_layer,
@@ -120,9 +125,8 @@ class MLDecoder(nn.Layer):
         self._init_weights()
 
     def _init_weights(self):
-        self.query_pos_embed.weight.stop_gradient = True
         normal_(self.query_pos_embed.weight)
-        xavier_normal_(self.group_conv.weight[:, :self.class_num])
+        xavier_normal_(self.group_conv.weight)
         zeros_(self.group_conv.bias)
 
     def group_fc_pool(self, x):
@@ -135,10 +139,11 @@ class MLDecoder(nn.Layer):
         assert x.ndim == 4 and x.shape[1] == self.in_chans, "Wrong input shape!!!"
 
         feat_proj = F.relu(self.input_proj(x))
-        feat_flatten = feat_proj.flatten(2).transpose([0, 2, 1])
+        memory = feat_proj.flatten(2).transpose([0, 2, 1])
 
         query_pos_embed = self.query_pos_embed.weight[None].tile([x.shape[0], 1, 1])
-        out_embed = self.decoder(query_pos_embed, feat_flatten)
+        tgt = paddle.zeros_like(query_pos_embed) + query_pos_embed
+        out_embed = self.decoder(tgt, memory)
 
         logit = self.group_fc_pool(out_embed)
         return logit
