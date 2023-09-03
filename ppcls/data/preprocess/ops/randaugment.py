@@ -345,3 +345,107 @@ class RandAugmentV3(RandAugment):
             "equalize": lambda img, _: ImageOps.equalize(img),
             "invert": lambda img, _: ImageOps.invert(img)
         }
+
+
+class RandAugmentV4(object):
+    """Custom RandAugment for ML-Decoder"""
+
+    def __init__(self, magnitude=10, fillcolor=(128, 128, 128)):
+        self.ranges = {
+            "shearx": np.linspace(0, 0.3, magnitude),
+            "sheary": np.linspace(0, 0.3, magnitude),
+            "translatex": np.linspace(0, 150 / 331, magnitude),
+            "translatey": np.linspace(0, 150 / 331, magnitude),
+            "rotate": np.linspace(0, 30, magnitude),
+            "color": np.linspace(0.0, 0.9, magnitude),
+            "posterize": np.round(np.linspace(8, 4, magnitude), 0).astype(np.int),
+            "solarize": np.linspace(256, 0, magnitude),
+            "contrast": np.linspace(0.0, 0.9, magnitude),
+            "sharpness": np.linspace(0.0, 0.9, magnitude),
+            "brightness": np.linspace(0.0, 0.9, magnitude),
+            "autocontrast": [0] * magnitude,
+            "equalize": [0] * magnitude,
+            "invert": [0] * magnitude,
+            "cutout": np.round(np.linspace(0, 20, magnitude), 0).astype(np.int),
+        }
+
+        def rotate_with_fill(img, magnitude):
+            rot = img.convert("RGBA").rotate(magnitude)
+            return Image.composite(
+                rot, Image.new("RGBA", rot.size, (128,) * 4), rot
+            ).convert(img.mode)
+
+        self.func = {
+            "shearx": lambda img, magnitude: img.transform(
+                img.size,
+                Image.AFFINE,
+                (1, magnitude * random.choice([-1, 1]), 0, 0, 1, 0),
+                Image.BICUBIC,
+                fillcolor=fillcolor,
+            ),
+            "sheary": lambda img, magnitude: img.transform(
+                img.size,
+                Image.AFFINE,
+                (1, 0, 0, magnitude * random.choice([-1, 1]), 1, 0),
+                Image.BICUBIC,
+                fillcolor=fillcolor,
+            ),
+            "translatex": lambda img, magnitude: img.transform(
+                img.size,
+                Image.AFFINE,
+                (1, 0, magnitude * img.size[0] * random.choice([-1, 1]), 0, 1, 0),
+                fillcolor=fillcolor,
+            ),
+            "translatey": lambda img, magnitude: img.transform(
+                img.size,
+                Image.AFFINE,
+                (1, 0, 0, 0, 1, magnitude * img.size[1] * random.choice([-1, 1])),
+                fillcolor=fillcolor,
+            ),
+            "rotate": lambda img, magnitude: rotate_with_fill(img, magnitude),
+            # "rotate": lambda img, magnitude: img.rotate(magnitude * random.choice([-1, 1])),
+            "color": lambda img, magnitude: ImageEnhance.Color(img).enhance(
+                1 + magnitude * random.choice([-1, 1])
+            ),
+            "posterize": lambda img, magnitude: ImageOps.posterize(img, magnitude),
+            "solarize": lambda img, magnitude: ImageOps.solarize(img, magnitude),
+            "contrast": lambda img, magnitude: ImageEnhance.Contrast(img).enhance(
+                1 + magnitude * random.choice([-1, 1])
+            ),
+            "sharpness": lambda img, magnitude: ImageEnhance.Sharpness(img).enhance(
+                1 + magnitude * random.choice([-1, 1])
+            ),
+            "brightness": lambda img, magnitude: ImageEnhance.Brightness(img).enhance(
+                1 + magnitude * random.choice([-1, 1])
+            ),
+            "autocontrast": lambda img, magnitude: ImageOps.autocontrast(img),
+            "equalize": lambda img, magnitude: ImageOps.equalize(img),
+            "invert": lambda img, magnitude: ImageOps.invert(img),
+            "cutout": lambda img, magnitude: cutout(img, magnitude, replace=fillcolor[0]),
+        }
+
+        op_list = []
+        for trans in self.ranges.keys():
+            for _magnitude in range(1, magnitude):
+                op_list += [(0.5, trans, _magnitude)]
+
+        policies = []
+        for op_1 in op_list:
+            for op_2 in op_list:
+                policies += [[op_1, op_2]]
+
+        self.policies = policies
+
+    def trans_op_apply(self, img, trans_op_list):
+        trans_op_prob, trans_op_name, trans_op_magnitude_idx = trans_op_list
+        trans_op = self.func[trans_op_name]
+        trans_op_magnitude = self.ranges[trans_op_name][trans_op_magnitude_idx]
+        if random.random() < trans_op_prob:
+            img = trans_op(img, trans_op_magnitude)
+        return img
+
+    def __call__(self, img):
+        policies = self.policies[random.randint(0, len(self.policies) - 1)]
+        for trans_op_list in policies:
+            img = self.trans_op_apply(img, trans_op_list)
+        return img
