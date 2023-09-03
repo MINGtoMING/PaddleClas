@@ -2,7 +2,7 @@
 Global:
   checkpoints: null
   pretrained_model: null
-  output_dir: ./output/
+  output_dir: ./output/test1/
   device: gpu
   save_interval: 1
   eval_during_train: True
@@ -36,6 +36,14 @@ Arch:
   name: ResNet50
   class_num: 80
   pretrained: True
+  # use ml-decoder head to replace avg_pool and fc
+  use_ml_decoder: True
+
+# ml-decoder head
+MLDecoder:
+  class_num: 80
+  query_num: 80
+  in_chans: 2048
 
 # loss function config for training/eval process
 Loss:
@@ -56,17 +64,19 @@ Loss:
         disable_focal_loss_grad: True
 
 Optimizer:
-  name: AdamW
-  weight_decay: 0.0001
+  name: Adam
   one_dim_param_no_weight_decay: True
   lr:
     name: OneCycleLR
     max_learning_rate: 0.0001 # 1e-4
     divide_factor: 25.0
-    end_learning_rate: 0.00000001 # 1e-8
+    end_learning_rate: 0.0000000001 # 1e-10
     phase_pct: 0.2
     anneal_strategy: "cos"
     three_phase: False
+  regularizer:
+    name: 'L2'
+    coeff: 0.0001
 
 # data loader for train and eval
 DataLoader:
@@ -74,17 +84,18 @@ DataLoader:
     dataset:
       name: MultiLabelCOCODataset
       dataset_dir: ./dataset/COCO2017
-      image_dir: val2017/
-      anno_path: annotations/instances_val2017.json
+      image_dir: train2017/
+      anno_path: annotations/instances_train2017.json
       transform_ops:
         - DecodeImage:
             to_rgb: True
             channel_first: False
         - ResizeImage:
             size: 224
-            interpolation: bilinear
+            interpolation: "bilinear"
             backend: "pil"
         - CutoutPIL:
+            cutout_factor: 0.5
         - RandAugmentV4:
         - NormalizeImage:
             scale: 1.0/255.0
@@ -94,11 +105,11 @@ DataLoader:
 
     sampler:
       name: DistributedBatchSampler
-      batch_size: 8
+      batch_size: 56
       drop_last: False
       shuffle: True
     loader:
-      num_workers: 0
+      num_workers: 32
       use_shared_memory: False
 
   Eval:
@@ -113,7 +124,7 @@ DataLoader:
             channel_first: False
         - ResizeImage:
             size: 224
-            interpolation: bilinear
+            interpolation: "bilinear"
             backend: "pil"
         - NormalizeImage:
             scale: 1.0/255.0
@@ -122,11 +133,11 @@ DataLoader:
             order: ''
     sampler:
       name: DistributedBatchSampler
-      batch_size: 16
+      batch_size: 32
       drop_last: False
       shuffle: False
     loader:
-      num_workers: 0
+      num_workers: 32
       use_shared_memory: False
 
 Infer:
@@ -138,7 +149,7 @@ Infer:
         channel_first: False
     - ResizeImage:
         size: 224
-        interpolation: bilinear
+        interpolation: "bilinear"
         backend: "pil"
     - NormalizeImage:
         scale: 1.0/255.0
