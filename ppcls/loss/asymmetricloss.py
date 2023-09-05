@@ -42,6 +42,7 @@ class MultiLabelASL(nn.Layer):
         if isinstance(x, dict):
             x = x["logits"]
         pred_sigmoid = F.sigmoid(x)
+        target = target.astype(pred_sigmoid.dtype)
 
         # Asymmetric Clipping and Basic CE calculation
         if self.clip and self.clip > 0:
